@@ -1,8 +1,21 @@
-<html>
-	<head>
-		<title>LLMDoc</title>
-	</head>
-	<body>
-		<h1>Article</h1>
-	</body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLMDoc</title>
+	{{ template "styles" }}
+</head>
+<body>
+    {{ template "header" }}
+    <content>
+        {{ template "sidebar" }}
+        <main>
+            <section>
+                {{ .Content }}
+            </section>
+        </main>
+    </content>
+
+</body>
 </html>

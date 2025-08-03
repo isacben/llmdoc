@@ -1,8 +1,9 @@
 package llmdoc
 
 import (
+	"bytes"
+	"fmt"
 	"html/template"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
 )
 
 type SlugReader interface {
@@ -21,26 +23,41 @@ type FileReader struct {
 	Dir string
 }
 
+type Page struct {
+	Sidebar string
+	Header  string
+}
+
 func (fr FileReader) Read(slug string) (string, error) {
 	slugPath := filepath.Join(fr.Dir, slug+".md")
 
-	f, err := os.Open(slugPath)
-	if err != nil {
-		return "", err
+	//f, err := os.Open(slugPath)
+	//if err != nil {
+	//	return "", err
+	//}
+
+	//defer f.Close()
+
+	//b, err := io.ReadAll(f)
+	//if err != nil {
+	//	return "", err
+	//}
+
+	// Check if file exists
+	if _, err := os.Stat(slugPath); os.IsNotExist(err) {
+		return "", fmt.Errorf("file not found: %s", slugPath)
 	}
 
-	defer f.Close()
-
-	b, err := io.ReadAll(f)
+	content, err := os.ReadFile(slugPath)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error reading file: %w", err)
 	}
-	return string(b), nil
+	return string(content), nil
 }
 
-func IndexHandler(t *template.Template) (http.HandlerFunc, error) {
+func IndexHandler(page Page, t *template.Template) (http.HandlerFunc, error) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		err := t.Execute(w, nil)
+		err := t.Execute(w, page)
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
@@ -49,17 +66,26 @@ func IndexHandler(t *template.Template) (http.HandlerFunc, error) {
 
 func ArticleHandler(sr SlugReader, t *template.Template) (http.HandlerFunc, error) {
 	mdRenderer := goldmark.New(
-		goldmark.WithExtensions(),
+		goldmark.WithExtensions(
+			extension.Table,
+		),
 	)
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		slug := r.PathValue("slug")
+		slug := strings.Trim(r.PathValue("slug"), "/")
+		if slug == "" {
+			http.NotFound(w, r)
+			return
+		}
 
 		if strings.Contains(slug, ".md") {
 			slug = strings.Split(slug, ".")[0]
 			article, err := sr.Read(slug)
 			if err != nil {
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				//http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				http.NotFound(w, r)
+				fmt.Println(err)
+				return
 			}
 			_, err = w.Write([]byte(article))
 			if err != nil {
@@ -71,9 +97,23 @@ func ArticleHandler(sr SlugReader, t *template.Template) (http.HandlerFunc, erro
 		articleMarkdown, err := sr.Read(slug)
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
 		}
 
-		err = mdRenderer.Convert([]byte(articleMarkdown), w)
+		var buf bytes.Buffer
+		err = mdRenderer.Convert([]byte(articleMarkdown), &buf)
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		article := struct {
+			Content template.HTML
+		}{
+			Content: template.HTML(buf.String()),
+		}
+
+		err = t.Execute(w, article)
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}

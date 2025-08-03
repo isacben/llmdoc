@@ -1,0 +1,93 @@
+{{ define "styles" }}
+<style>
+    
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: 'Trebuchet MS', sans-serif;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    header {
+        width: 100%;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f6f8fa;
+        border-bottom: 1px solid #e2e2e2;
+    }
+
+    header ul {
+        list-style: none;
+        padding-left: 20px;
+    }
+
+    header ul li {
+        display: inline;
+        margin-right: 20px;
+    }
+
+    header ul li a {
+        text-decoration: none;
+        padding: 5px;
+        color: #000000;
+    }
+    
+    header ul li a:hover {
+        background-color: #e8eff6;
+        border-radius: 5px;
+        padding: 5px;
+    }
+
+    header ul li a:visited {
+        color: #000000;
+    }
+
+    content {
+        display: flex;
+        height: 100%;
+    }
+
+    sidebar {
+        background-color: #ffffff;
+        padding: 20px;
+        border-right: 1px solid #e2e2e2;
+        font-size: 0.9rem;
+    }
+    
+    sidebar ul {
+        list-style: none;
+        padding: 0;
+    }
+    
+    sidebar ul li {
+        margin-bottom: 3px;
+    }
+
+    sidebar ul li a {
+        text-decoration: none;
+        color: #000000;
+        padding: 5px;
+        display: block;
+    }
+
+    sidebar ul li a:hover {
+        background-color: #e8eff6;
+        border-radius: 5px;
+        padding: 5px;
+    }
+    
+    main {
+        flex: 1;
+        background: white;
+        padding: 20px;
+    }
+
+    
+
+</style>
+{{ end }}
